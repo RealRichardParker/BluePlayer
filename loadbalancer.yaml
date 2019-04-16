@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: music-loadbalancer
+spec:
+  loadBalancerIP: 104.43.134.237
+  type: LoadBalancer
+  ports: 
+  - protocol: TCP
+    port: 80
+    targetPort: 5000
+  selector:
+    app: blueplayer

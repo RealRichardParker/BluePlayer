@@ -20,11 +20,8 @@ spec:
         ports:
         - containerPort: 5000
         env:
-          - name: "PASSWORD"
-            value: testpass123!@#
-          - name: "DB"
-            value: testdb
-          - name: "HOST"
-            value: 104.198.62.251
-          - name: "USER"
-            value: root
+          - name: AZURE_STORAGE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: azure-secret
+                key: storage-key

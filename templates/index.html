@@ -1,10 +1,17 @@
 <!DOCTYPE html>
-<html> 
-    <head> 
+<html>
+    <head>
         <title>Blue Player</title>
     </head>
 
-    <body> 
-        <h1>Blue Player</h1>
+    <body>
+        {% for music in data %}
+            <li>{{music}}</li>
+        {% endfor %}
+
+        <form action="upload" method="post" enctype=multipart/form-data>
+            <input type="file" name="file">
+            <input type="submit" value="Upload">
+        </form>
     </body>
 </html>

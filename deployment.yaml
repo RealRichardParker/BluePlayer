@@ -25,3 +25,8 @@ spec:
               secretKeyRef:
                 name: azure-secret
                 key: storage-key
+          - name: FLASK_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: flask-secret
+                key: flask-key

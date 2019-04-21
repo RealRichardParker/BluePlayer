@@ -1,5 +1,4 @@
 from flask import Flask, render_template, flash, redirect, request, url_for
-from flask_bootstrap import Bootstrap
 import os
 from azure.storage.blob import BlockBlobService, PublicAccess
 
@@ -12,7 +11,6 @@ blob_service = BlockBlobService(account_name=AZURE_ACCOUNT,
                                       account_key=AZURE_STORAGE_KEY)
 
 app = Flask(__name__)
-Bootstrap(app)
 app.secret_key = os.environ['FLASK_SECRET']
 container = DEFAULT_CONTAINER
 

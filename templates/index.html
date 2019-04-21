@@ -5,9 +5,19 @@
     </head>
 
     <body>
-        {% for music in data %}
-            <li>{{music}}</li>
+        {% with messages= get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <h3> {{message}} <h3>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <ul>
+        {% for song in music %}
+            <li>{{song}}</li>
         {% endfor %}
+        </ul>
 
         <form action="upload" method="post" enctype=multipart/form-data>
             <input type="file" name="file">

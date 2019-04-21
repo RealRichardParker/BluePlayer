@@ -1,4 +1,5 @@
 from flask import Flask, render_template, flash, redirect, request, url_for
+from flask_bootstrap import Bootstrap
 import os
 from azure.storage.blob import BlockBlobService, PublicAccess
 
@@ -11,6 +12,7 @@ blob_service = BlockBlobService(account_name=AZURE_ACCOUNT,
                                       account_key=AZURE_STORAGE_KEY)
 
 app = Flask(__name__)
+Bootstrap(app)
 app.secret_key = os.environ['FLASK_SECRET']
 container = DEFAULT_CONTAINER
 
@@ -39,11 +41,11 @@ def upload():
     if request.method == 'POST':
         file = request.files['file']
         if file.filename == '':
-            flash("no file selected!")
+            flash("no file selected!", 'danger')
             return redirect(request.url)
         if file:
             if _allowed_files(file.filename):
-                flash(file.filename + " uploaded")
+                flash(file.filename + " uploaded", 'success')
                 blob_service.create_blob_from_stream(container, file.filename,
                                                      file.stream)
             else:

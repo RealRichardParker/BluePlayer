@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from flask import Flask, render_template, flash, redirect, request, url_for
 import os
 from azure.storage.blob import BlockBlobService, PublicAccess

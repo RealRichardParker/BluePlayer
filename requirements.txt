@@ -1,2 +1,4 @@
 flask
 azure-storage
+azure-mgmt-resource
+azure-mgmt-media

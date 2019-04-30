@@ -31,12 +31,31 @@
             </div>
         <footer class="footer mt-autoo py-3">
             <div class="container">
-                <form action="upload" method="post" enctype=multipart/form-data>
-                    <input type="file" name="file" accept=".mp3">
-                    <input type="submit" value="Upload">
-                </form>
             </div>
         </footer>
+    <nav class="navbar fixed-bottom navbar-expand-sm navbar-light">
+        <a class="navbar-brand" href="#">BluePlayer</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarCollapse">
+        <ul class="navbar-nav mr-auto">
+        </ul>
+        <div class="btn-group mx-auto order-0" role="group" aria-label="...">
+          <button type="button" class="btn btn-default">Prev</button>
+          <button type="button" class="btn btn-default">Play</button>
+          <button type="button" class="btn btn-default">Next</button>
+        </div>
+          <div class="ml-auto">
+            <form class="form-inline" action="upload" method="post" enctype=multipart/form-data>
+                <div class="form-group">
+                    <input type="file" class="form-control-file" name="file" id="fileInput" accept=".mp3">
+                </div>
+                <button type="submit" class="btn btn-primary" value="Upload">Upload</button>
+            </form>
+          </div>
+      </div>
+    </nav>
     {% endblock %}
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>

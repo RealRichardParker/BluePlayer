@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from flask import Flask, render_template, flash, redirect, request, url_for
-from datetime import datetime, timedelta
 import os
 from azure.storage.blob import BlockBlobService, PublicAccess, ContainerPermissions
 import adal
@@ -37,12 +36,6 @@ credentials = AdalAuthentication(
     KEY
 )
 
-print("These are the login credentials:")
-print("TENANT_ID: " + TENANT_ID)
-print("CLIENT: " + CLIENT)
-print("KEY: " + KEY)
-print("SUBSCRIPTION_ID: " + SUBSCRIPTION_ID)
-
 # The AMS Client
 client = AzureMediaServices(credentials, SUBSCRIPTION_ID)
 # Blob service client
@@ -58,48 +51,19 @@ container = DEFAULT_CONTAINER
 
 @app.route("/")
 def hello():
-    if not blob_service.exists(DEFAULT_CONTAINER):
-        blob_service.create_container(DEFAULT_CONTAINER, public_access='container')
-
-    #input_asset = client.assets.get(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
-    #                                INPUT_ASSET)
-    #if not input_asset:
-    #    print("Creating Input Asset")
-    #    asset_in = Asset(storage_account_name=AZURE_ACCOUNT)
-    #    client.assets.create_or_update(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
-    #                                   INPUT_ASSET, asset_in)
-    #    input_asset = client.assets.get(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
-    #                                    INPUT_ASSET)
-
-    #output_asset = client.assets.get(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
-    #                                 OUTPUT_ASSET)
-    #if not output_asset:
-    #    print("Creating Output Asset")
-    #    asset_out = Asset(storage_account_name=AZURE_ACCOUNT)
-    #    client.assets.create_or_update(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
-    #                                   OUTPUT_ASSET, asset_out)
-    #    output_asset = client.assets.get(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
-    #                                     OUTPUT_ASSET)
-
-
-    #if not client.streaming_locators.get(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
-    #                                     STREAMING_LOCATOR):
-    #    print("Creating StreamingLocator")
-    #    locator = StreamingLocator(asset_name=OUTPUT_ASSET,
-    #                               streaming_policy_name=
-    #                               "Predefined_ClearStreamingOnly")
-    #    client.streaming_locators.create(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
-    #                                    STREAMING_LOCATOR, locator)
-
-    #use standardencoderpreset, need codecs: Audio? and formats: Mp4Format?
-    transforms=[TransformOutput(preset=
-                                BuiltInStandardEncoderPreset(preset_name=
-                                                             'AdaptiveStreaming'))]
+    transforms=[
+        TransformOutput(
+            preset=BuiltInStandardEncoderPreset(
+                preset_name='AdaptiveStreaming'
+            )
+        )
+    ]
     client.transforms.create_or_update(
         RESOURCE_GROUP_NAME,
         ACCOUNT_NAME,
         TRANSFORM_NAME,
-        transforms)
+        transforms
+    )
     return redirect(url_for("home"))
 
 def _get_music(asset_list, base_url):

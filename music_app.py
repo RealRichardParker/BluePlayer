@@ -12,7 +12,6 @@ from azure.mgmt.media.models import (MediaService, Asset, TransformOutput,
                                      JobInputAsset, Job, JobOutputAsset,
                                      StreamingLocator)
 from azure.mgmt.media.operations import AssetsOperations
-import pdb
 
 RESOURCE = 'https://management.core.windows.net/'
 TENANT_ID = os.environ['TENANT_ID']
@@ -59,7 +58,6 @@ def hello():
             )
         )
     ]
-    pdb.set_trace()
     client.transforms.create_or_update(
         RESOURCE_GROUP_NAME,
         ACCOUNT_NAME,

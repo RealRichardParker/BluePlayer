@@ -67,7 +67,7 @@ def hello():
     return redirect(url_for("home"))
 
 def _get_music(asset_list, base_url):
-    music = []
+    music = dict()
     for asset in asset_list:
         print(asset.name)
         if(asset.name.startswith('out__')):
@@ -125,12 +125,12 @@ def _get_music(asset_list, base_url):
                         asset.name,
                         update
                     )
-                    music.append(basename)
                     print(url)
+                    music[basename] = url
             # Streaming locator already exists
             else:
                 print(url)
-                music.append(basename)
+                music[basename] = url
     return music
 
 @app.route("/home")

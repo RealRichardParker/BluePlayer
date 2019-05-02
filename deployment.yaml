@@ -29,12 +29,12 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: azure-secret
-                key: tenant-id
+                key: tenant
           - name: CLIENT
             valueFrom:
               secretKeyRef:
                 name: azure-secret
-                key: client-id
+                key: client
           - name: KEY
             valueFrom:
               secretKeyRef:
@@ -44,7 +44,7 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: azure-secret
-                key: subscription-id
+                key: subscription
           - name: FLASK_SECRET
             valueFrom:
               secretKeyRef:

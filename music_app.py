@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
 from flask import Flask, render_template, flash, redirect, request, url_for
+from datetime import datetime, timedelta
 import os
-from azure.storage.blob import BlockBlobService, PublicAccess
+from azure.storage.blob import BlockBlobService, PublicAccess, ContainerPermissions
 import adal
 from msrestazure.azure_active_directory import AdalAuthentication
 from msrestazure.azure_cloud import AZURE_PUBLIC_CLOUD
 from azure.mgmt.media import AzureMediaServices
-from azure.mgmt.media.models import (MediaService, Asset, StandardEncoderPreset,
-                                     TransformOutput, AacAudio, Mp4Format,
+from azure.mgmt.media.models import (MediaService, Asset, TransformOutput,
+                                     BuiltInStandardEncoderPreset,
                                      JobInputAsset, Job, JobOutputAsset,
                                      StreamingLocator)
 from azure.mgmt.media.operations import AssetsOperations
@@ -20,6 +21,10 @@ KEY = os.environ['KEY']
 SUBSCRIPTION_ID = os.environ['SUBSCRIPTION_ID']
 ACCOUNT_NAME = 'blueplayermedia'
 RESOURCE_GROUP_NAME = 'BluePlayer'
+AZURE_STORAGE_KEY = os.environ['AZURE_STORAGE_KEY']
+AZURE_ACCOUNT = 'blueplayerstorage'
+DEFAULT_CONTAINER = "blue-player"
+TRANSFORM_NAME = "blue-player-transform"
 
 LOGIN_ENDPOINT = AZURE_PUBLIC_CLOUD.endpoints.active_directory
 RESOURCE = AZURE_PUBLIC_CLOUD.endpoints.active_directory_resource_id
@@ -40,16 +45,6 @@ blob_service = BlockBlobService(account_name=AZURE_ACCOUNT,
 
 ALLOWED_EXTENSIONS= set(['mp3'])
 
-AZURE_STORAGE_KEY = os.environ['AZURE_STORAGE_KEY']
-AZURE_ACCOUNT = 'blueplayerstorage'
-DEFAULT_CONTAINER = "blue-player"
-INPUT_ASSET = "blue-player-input-asset"
-INPUT_CONTAINER = "asset-input-container"
-OUTPUT_ASSET = "blue-player-output-asset"
-OUTPUT_ASSET = "asset-output-container"
-TRANSFORM_NAME = "blue-player-transform"
-JOB_NAME = "blue-player-job"
-STREAMING_LOCATOR = "blue-player-streaming-locator"
 
 app = Flask(__name__)
 app.secret_key = os.environ['FLASK_SECRET']
@@ -57,54 +52,140 @@ container = DEFAULT_CONTAINER
 
 @app.route("/")
 def hello():
+    if not blob_service.exists(DEFAULT_CONTAINER):
+        blob_service.create_container(DEFAULT_CONTAINER, public_access='container')
+
+    #input_asset = client.assets.get(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
+    #                                INPUT_ASSET)
+    #if not input_asset:
+    #    print("Creating Input Asset")
+    #    asset_in = Asset(storage_account_name=AZURE_ACCOUNT)
+    #    client.assets.create_or_update(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
+    #                                   INPUT_ASSET, asset_in)
+    #    input_asset = client.assets.get(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
+    #                                    INPUT_ASSET)
+
+    #output_asset = client.assets.get(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
+    #                                 OUTPUT_ASSET)
+    #if not output_asset:
+    #    print("Creating Output Asset")
+    #    asset_out = Asset(storage_account_name=AZURE_ACCOUNT)
+    #    client.assets.create_or_update(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
+    #                                   OUTPUT_ASSET, asset_out)
+    #    output_asset = client.assets.get(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
+    #                                     OUTPUT_ASSET)
+
+
+    #if not client.streaming_locators.get(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
+    #                                     STREAMING_LOCATOR):
+    #    print("Creating StreamingLocator")
+    #    locator = StreamingLocator(asset_name=OUTPUT_ASSET,
+    #                               streaming_policy_name=
+    #                               "Predefined_ClearStreamingOnly")
+    #    client.streaming_locators.create(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
+    #                                    STREAMING_LOCATOR, locator)
+
+    #use standardencoderpreset, need codecs: Audio? and formats: Mp4Format?
+    transforms=[TransformOutput(preset=
+                                BuiltInStandardEncoderPreset(preset_name=
+                                                             'AdaptiveStreaming'))]
+    client.transforms.create_or_update(
+        RESOURCE_GROUP_NAME,
+        ACCOUNT_NAME,
+        TRANSFORM_NAME,
+        transforms)
     return redirect(url_for("home"))
+
+def _get_music(asset_list, base_url):
+    music = []
+    for asset in asset_list:
+        print(asset.name)
+        if(asset.name.startswith('out__')):
+            basename = asset.name[5:]
+            url = asset.description
+
+            #no streaming locator
+            if not url:
+                print("No streaming locator for " + asset.name)
+                response = client.jobs.get(
+                    RESOURCE_GROUP_NAME,
+                    ACCOUNT_NAME,
+                    TRANSFORM_NAME,
+                    "job__" + basename
+                )
+                #No streaming locator, but finished encoding, so must create
+                if response.state == 'Finished':
+                    print("Job is finished, creating locator for " + asset.name)
+
+                    #Check thaat locator doesnt already exist
+                    locator = client.streaming_locators.get(
+                        RESOURCE_GROUP_NAME,
+                        ACCOUNT_NAME,
+                        "loc__" + basename
+                    )
+                    if not locator:
+                        client.streaming_locators.create(
+                            RESOURCE_GROUP_NAME,
+                            ACCOUNT_NAME,
+                            "loc__" + basename,
+                            StreamingLocator(
+                                asset_name=asset.name,
+                                streaming_policy_name=
+                                    'Predefined_ClearStreamingOnly'
+                            )
+                        )
+
+                    #Generate streaming path and add to asset
+                    paths = client.streaming_locators.list_paths(
+                        RESOURCE_GROUP_NAME,
+                        ACCOUNT_NAME,
+                        "loc__" + basename
+                    )
+                    path = ""
+                    for item in paths.streaming_paths:
+                        path = item.paths[0]
+                    url = base_url + path
+                    update = Asset(
+                        alternate_id=asset.alternate_id,
+                        description=url)
+                    print("adding url: " + url + "to " + asset.name)
+                    client.assets.create_or_update(
+                        RESOURCE_GROUP_NAME,
+                        ACCOUNT_NAME,
+                        asset.name,
+                        update
+                    )
+                    music.append(basename)
+                    print(url)
+            # Streaming locator already exists
+            else:
+                print(url)
+                music.append(basename)
+    return music
 
 @app.route("/home")
 def home():
-    if not blob_service.exists(container):
-        blob_service.create_container(container, public_access='container')
+    #Get streaming endpoint and start it if it is stopped
+    response = client.streaming_endpoints.get(
+        RESOURCE_GROUP_NAME,
+        ACCOUNT_NAME,
+        'default'
+    )
+    if response.resource_state == 'Stopped':
+        client.streaming_endpoints.start(
+            RESOURCE_GROUP_NAME,
+            ACCOUNT_NAME,
+            'default'
+        )
+    base_url = response.host_name
 
-    if not blob_service.exists(INPUT_CONTAINER):
-        blob_service.create_container(container, )
+    response = client.assets.list(
+        RESOURCE_GROUP_NAME,
+        ACCOUNT_NAME
+    )
 
-    if not client.assets.get(RESOURCE_GROUP_NAME, ACCOUNT_NAME, INPUT_ASSET):
-        print("Creating Input Asset")
-        asset_in = Asset(storage_account_name=AZURE_ACCOUNT)
-        client.assets.create_or_update(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
-                                       INPUT_ASSET, asset_in)
-
-    if not client.assets.get(RESOURCE_GROUP_NAME, ACCOUNT_NAME, OUTPUT_ASSET):
-        print("Creating Output Asset")
-        asset_out = Asset(storage_account_name=AZURE_ACCOUNT)
-        client.assets.create_or_update(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
-                                       OUTPUT_ASSET, asset_out)
-
-    if not client.streaming_locators.get(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
-                                         STREAMING_LOCATOR):
-        print("Creating StreamingLocator")
-        locator = StreamingLocator(asset_name=OUTPUT_ASSET,
-                                   streaming_policy_name=
-                                   "Predefined_ClearStreamingOnly")
-        client.streaming_locators.create(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
-                                        STREAMING_LOCATOR, locator)
-    paths = client.streaming_locators.list_paths(RESOURCE_GROUP_NAME, ACCOUNT_NAME, STREAMING_LOCATOR).streaming_paths
-    for path in paths:
-        print(path.paths)
-
-    music_blobs = blob_service.list_blobs(container)
-    music = []
-    for blob in music_blobs:
-        music.append(blob.name)
-    #use standardencoderpreset, need codecs: Audio? and formats: Mp4Format?
-    codecs = [AacAudio()]
-    formats = [Mp4Format(filename_pattern="{Basename}_AAC_{AudioBitrate}.mp4")]
-    transforms=[(TransformOutput(preset=
-                                 StandardEncoderPreset(codecs=codecs,
-                                                       formats=formats)))]
-    if not client.transforms.get(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
-                                 TRANSFORM_NAME):
-        client.transforms.create_or_update(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
-                                           TRANSFORM_NAME,transforms)
+    #Get list of music uploaded and avaliable to stream
+    music = _get_music(response, base_url)
 
     return render_template("index.html", music=music)
 
@@ -112,8 +193,77 @@ def _allowed_files(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
+def  _upload_and_encode(file):
+    # clean up inputs
+    basename = file.filename.replace('.', '-')
+    basename = basename.replace(' ', '-')
+    in_asset = "in__" + basename
+    print(in_asset)
+
+    # Create new input asset
+    client.assets.create_or_update(
+        RESOURCE_GROUP_NAME,
+        ACCOUNT_NAME,in_asset,
+        Asset()
+    )
+
+    #Get asset container and upload file to it
+    response = client.assets.get(
+        RESOURCE_GROUP_NAME,
+        ACCOUNT_NAME,
+        in_asset
+    )
+    print("got a response, know what kind of container??")
+    print(response.container)
+
+    blob_service.create_blob_from_stream(
+        response.container,
+        basename,
+        stream=file.stream
+    )
+
+    #Create output asset and add streaming locator name to it as metadata
+    out_asset = "out__" + basename
+    locator_name = "loc__" + basename
+    client.assets.create_or_update(
+        RESOURCE_GROUP_NAME,
+        ACCOUNT_NAME,
+        out_asset,
+        Asset(alternate_id=locator_name)
+    )
+
+    #Check if job exists, delete it if it does
+    job_name = "job__" + basename
+    response = client.jobs.get(
+        RESOURCE_GROUP_NAME,
+        ACCOUNT_NAME,
+        TRANSFORM_NAME,
+        job_name
+    )
+    if response:
+        client.jobs.delete(
+            RESOURCE_GROUP_NAME,
+            ACCOUNT_NAME,
+            TRANSFORM_NAME,
+            job_name
+        )
+
+    #Create new job with corret inputs and outputs
+    inputs = JobInputAsset(asset_name=in_asset)
+    outputs = [JobOutputAsset(asset_name=out_asset)]
+    new_job = Job(input=inputs, outputs=outputs)
+    print("Creating new job")
+    client.jobs.create(
+        RESOURCE_GROUP_NAME,
+        ACCOUNT_NAME,
+        TRANSFORM_NAME,
+        job_name, new_job
+    )
+
 @app.route("/upload", methods=['GET', 'POST'])
 def upload():
+    #Uploading file
     if request.method == 'POST':
         file = request.files['file']
         if file.filename == '':
@@ -121,21 +271,16 @@ def upload():
             return redirect(request.url)
         if file:
             if _allowed_files(file.filename):
+                _upload_and_encode(file)
+
                 flash(file.filename + " uploaded", 'success')
-                response = client.assets.get(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
-                                             INPUT_ASSET)
-                blob_service.create_blob_from_stream(response.container,
-                                                     file.filename,
-                                                     stream=file.stream)
-                inputs = JobInputAsset(asset_name=INPUT_ASSET)
-                outputs = [JobOutputAsset(asset_name=OUTPUT_ASSET)]
-                new_job = Job(input=inputs, outputs=outputs)
-                client.jobs.create(RESOURCE_GROUP_NAME, ACCOUNT_NAME,
-                                   TRANSFORM_NAME, JOB_NAME, new_job)
 
             else:
                 flash(file.filename + " is not a valid music file")
-    return redirect(url_for("home"))
+    #Going to upload page
+    if request.method == 'GET':
+        return render_template("upload.html")
+    return redirect(url_for("upload"))
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')

@@ -16,7 +16,7 @@
       <div class="collapse navbar-collapse" id="navbarCollapse">
         <ul class="navbar-nav mr-auto">
           <li class="navbar-item active">
-              <a class="nav-link" href="/upload">Upload</a>
+              <a class="nav-link" href="/home">Back</a>
           </li>
         </ul>
       </div>
@@ -35,17 +35,14 @@
             {% endwith %}
         </div>
             
-            <div class="container">
-                <ul>
-                {% for song in music %}
-                    <li>{{song}}</li>
-                {% endfor %}
-                </ul>
+      <div class="container">
+        <form class="form-inline" action="upload" method="post" enctype=multipart/form-data>
+            <div class="form-group">
+                <input type="file" class="form-control-file" name="file" id="fileInput" accept=".mp3">
             </div>
-        <footer class="footer mt-autoo py-3">
-            <div class="container">
-            </div>
-        </footer>
+            <button type="submit" class="btn btn-primary" value="Upload">Save</button>
+        </form>
+      </div>
     <nav class="navbar fixed-bottom navbar-expand-sm navbar-light">
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>

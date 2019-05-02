@@ -25,6 +25,26 @@ spec:
               secretKeyRef:
                 name: azure-secret
                 key: storage-key
+          - name: TENANT_ID
+            valueFrom:
+              secretKeyRef:
+                name: azure-secret
+                key: tenant-id
+          - name: CLIENT
+            valueFrom:
+              secretKeyRef:
+                name: azure-secret
+                key: client-id
+          - name: KEY
+            valueFrom:
+              secretKeyRef:
+                name: azure-secret
+                key: key
+          - name: SUBSCRIPTION_ID
+            valueFrom:
+              secretKeyRef:
+                name: azure-secret
+                key: subscription-id
           - name: FLASK_SECRET
             valueFrom:
               secretKeyRef:

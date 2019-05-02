@@ -37,6 +37,12 @@ credentials = AdalAuthentication(
     KEY
 )
 
+print("These are the login credentials:")
+print("TENANT_ID: " + TENANT_ID)
+print("CLIENT: " + CLIENT)
+print("KEY: " + KEY)
+print("SUBSCRIPTION_ID: " + SUBSCRIPTION_ID)
+
 # The AMS Client
 client = AzureMediaServices(credentials, SUBSCRIPTION_ID)
 # Blob service client

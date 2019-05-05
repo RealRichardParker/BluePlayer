@@ -157,7 +157,7 @@ def home():
     #Get list of music uploaded and avaliable to stream
     music = _get_music(response, base_url)
 
-    return render_template("index.html", music=music)
+    return render_template("index.html", music=music, length=len(music))
 
 def _allowed_files(filename):
     return '.' in filename and \

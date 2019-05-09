@@ -228,7 +228,8 @@ def  _upload_and_encode(file):
         RESOURCE_GROUP_NAME,
         ACCOUNT_NAME,
         TRANSFORM_NAME,
-        job_name, new_job
+        job_name,
+        new_job
     )
 
 @app.route("/upload", methods=['GET', 'POST'])
@@ -251,6 +252,18 @@ def upload():
     if request.method == 'GET':
         return render_template("upload.html")
     return redirect(url_for("upload"))
+
+@app.route('/delete', methods=['POST'])
+def delete():
+    data = request.form['url']
+    print("deleting " + data)
+    client.assets.delete(
+        RESOURCE_GROUP_NAME,
+        ACCOUNT_NAME,
+        "out__" + data
+    )
+    return redirect(url_for("home"))
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')

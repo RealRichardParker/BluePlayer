@@ -60,6 +60,14 @@
               <button id="{{loop.index}}" type="button" class="btn btn-primary" onclick="update('{{music[song]}}', {{loop.index}})"></button>
             </div>
           </td>
+          <td> 
+            <form class="form-inline" action="delete" method="post">
+              <div style="display:none">
+                  <input type="text" value="{{song}}" name="url">
+              </div>
+              <button type="submit" class="btn btn-primary" value="Delete">Delete</button>
+            </form>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
